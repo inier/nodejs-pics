@@ -26,5 +26,4 @@ node app.js
 ```
 
 ### 效果图
-![](./readme/2.png)
 ![](./readme/4.png)
