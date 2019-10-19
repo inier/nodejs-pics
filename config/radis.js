@@ -19,7 +19,8 @@ module.exports = {
   // 创建redis连接
   redisConn: redis.createClient({
     host: "127.0.0.1",
-    port: "6379"
+    port: "6379",
+    auth_pass: "a123456"
   }),
   RedisConfig,
   RegxConfig,

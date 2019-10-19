@@ -215,15 +215,16 @@ const Spider = {
   },
   // 4.具体下载
   downloadYY: function(callback) {
+    const that = this;
     //下载图片
-    redisConn.lpop(CacheKeys.img_download_url, function(err, reply) {
+    redisConn.lpop(CacheKeys.img_download_url, (err, reply) => {
       if (err || !reply) {
         return false;
       }
 
       let img = JSON.parse(reply);
 
-      webClient.get(img.remote_path, function(err, req, res, data) {
+      webClient.get(img.remote_path, (err, req, res, data) => {
         if (err || !data) {
           err && logger.warn(err);
           return;
@@ -242,7 +243,7 @@ const Spider = {
 
         img.location = `/${SpiderIDLE.IMAGE_FOLDER}/${img.category_id}${fileDetail.filepath}/${fileDetail.filename}`;
 
-        this.downloadImage(urlImg, savePath, imgReferer).then(({ status }) => {
+        that.downloadImage(urlImg, savePath, imgReferer).then(({ status }) => {
           if (status) {
             logger.info("↓ Image:", urlImg, ", path:", img.location);
             callback && callback(img);
@@ -257,9 +258,10 @@ const Spider = {
    * @param {String} savePath 本地保存地址
    * @param {String} imgReferer 用于突破防盗链
    */
-  downloadImage: function(urlImg, savePath, imgReferer) {
+  downloadImage: (urlImg, savePath, imgReferer) => {
     FileUtils.checkDir(savePath);
-    download(urlImg, savePath, {
+
+    return download(urlImg, savePath, {
       headers: {
         ["referer"]: imgReferer
       }
@@ -273,7 +275,7 @@ const Spider = {
       });
   },
   // 清除Redis缓存
-  clearRedis: function() {
+  clearRedis: () => {
     redisConn.flushdb(function(err) {
       logger.info(`============= clear Redis cache success! ==============`);
       err && logger.warn(err);
