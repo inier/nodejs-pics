@@ -1,6 +1,12 @@
-const redis = require("redis");
+const RedisUtil = require("../utils/redisUtil");
 
-const RedisConfig = {};
+// redis服务器信息
+const RedisConfig = {
+  host: "127.0.0.1",
+  port: "6379",
+  auth_pass: "a123456"
+};
+
 const RegxConfig = {
   index_tag: /<dl(.*?)class="tags">([\s\S]*?)<\/dl>/g
 };
@@ -16,13 +22,7 @@ const CacheKeys = {
 };
 
 module.exports = {
-  // 创建redis连接
-  redisConn: redis.createClient({
-    host: "127.0.0.1",
-    port: "6379",
-    auth_pass: "a123456"
-  }),
-  RedisConfig,
+  redisClient: RedisUtil.init(RedisConfig),
   RegxConfig,
   CacheKeys
 };

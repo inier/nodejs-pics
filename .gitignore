@@ -1,5 +1,7 @@
 /node_modules
 /download
 /logs
+/temp
+/upload
 Redis.lnk
 .vscode

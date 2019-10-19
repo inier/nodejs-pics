@@ -10,30 +10,25 @@ const cheerio = require("cheerio"); // node版jquery
 const process = require("process"); // 线程处理
 const download = require("download"); // download模块基于got
 
-const FileUtils = require("./util/fileUtils");
+const FileUtil = require("./utils/fileUtil");
 
 const loggerConfig = require("./logconf.json");
 log4js.configure(loggerConfig);
 const logger = log4js.getLogger();
 
 const {
-  redisConn,
+  redisClient,
   RedisConfig,
   RegxConfig,
   CacheKeys
-} = require("./config/radis");
-
-// Radis报错监听
-redisConn.on("error", function(err) {
-  console.log("Error " + err);
-});
+} = require("./config/spider-redis");
 
 const {
   RequestHeaders,
   webClient,
   serverApiClient,
   RemoteConfig
-} = require("./config/sourceSite");
+} = require("./config/spider-sourceSite");
 
 const ServerApi = {
   DocumentAdd: "/Document_add.action",
@@ -71,7 +66,7 @@ const Spider = {
         tag.banner = $this.find("img").attr("src");
         tag.url = $this.find("a").attr("href");
         //pop进入队列
-        redisConn.rpush(CacheKeys.index_tag, JSON.stringify(tag), function(
+        redisClient.rpush(CacheKeys.index_tag, JSON.stringify(tag), function(
           err,
           reply
         ) {
@@ -93,17 +88,17 @@ const Spider = {
         let html = $this.html();
         let page = html.match(/\d+/);
         if (parseInt(page)) {
-          redisConn.getset(CacheKeys.page_count, page);
+          redisClient.getset(CacheKeys.page_count, page);
         }
       });
-      redisConn.get(CacheKeys.page_count, function(err, reply) {
+      redisClient.get(CacheKeys.page_count, function(err, reply) {
         callback(reply);
       });
     });
   },
   // 2.加入套图页面数据,就是套图的数据
   getImgPage: function(callback) {
-    redisConn.decr(CacheKeys.page_count, function(err, reply) {
+    redisClient.decr(CacheKeys.page_count, function(err, reply) {
       if (err || !reply) {
         return false;
       }
@@ -151,7 +146,7 @@ const Spider = {
 
           //加入队列
           //TODO 写入gateway接口
-          redisConn.rpush(
+          redisClient.rpush(
             CacheKeys.page_detail,
             JSON.stringify(document),
             function(err, reply) {
@@ -166,7 +161,7 @@ const Spider = {
   },
   // 3.采集套图具体图片，就是套图数量的数据
   getTaoTuImgs: function(callback) {
-    redisConn.lpop(CacheKeys.page_detail, function(err, reply) {
+    redisClient.lpop(CacheKeys.page_detail, function(err, reply) {
       if (err || !reply) {
         return;
       }
@@ -202,7 +197,7 @@ const Spider = {
           };
 
           //这里可能直接push了10张图进去
-          redisConn.rpush(
+          redisClient.rpush(
             CacheKeys.img_download_url,
             JSON.stringify(img),
             function(err, reply) {
@@ -217,7 +212,7 @@ const Spider = {
   downloadYY: function(callback) {
     const that = this;
     //下载图片
-    redisConn.lpop(CacheKeys.img_download_url, (err, reply) => {
+    redisClient.lpop(CacheKeys.img_download_url, (err, reply) => {
       if (err || !reply) {
         return false;
       }
@@ -237,7 +232,7 @@ const Spider = {
         img.url_img = urlImg;
         img.path = `/${img.category_id}/`;
 
-        const fileDetail = FileUtils.parseUri(urlImg);
+        const fileDetail = FileUtil.parseUri(urlImg);
         const savePath = `${SpiderIDLE.BASE_PATH}/${SpiderIDLE.IMAGE_FOLDER}/${img.category_id}${fileDetail.filepath}`;
         const imgReferer = img.img_url;
 
@@ -259,7 +254,7 @@ const Spider = {
    * @param {String} imgReferer 用于突破防盗链
    */
   downloadImage: (urlImg, savePath, imgReferer) => {
-    FileUtils.checkDir(savePath);
+    FileUtil.checkDir(savePath);
 
     return download(urlImg, savePath, {
       headers: {
@@ -276,7 +271,7 @@ const Spider = {
   },
   // 清除Redis缓存
   clearRedis: () => {
-    redisConn.flushdb(function(err) {
+    redisClient.flushdb(function(err) {
       logger.info(`============= clear Redis cache success! ==============`);
       err && logger.warn(err);
     });
@@ -297,7 +292,7 @@ const SpiderTimer = setInterval(function() {
       const urlImg = document.content;
 
       // 1.下载到本地进行存储
-      const fileDetail = FileUtils.parseUri(urlImg);
+      const fileDetail = FileUtil.parseUri(urlImg);
       const savePath = `${SpiderIDLE.BASE_PATH}/${SpiderIDLE.THUMB_FOLDER}${fileDetail.filepath}`;
       const imgReferer = document.url;
 
@@ -329,6 +324,6 @@ Spider.getPageList(function(count) {
 // pm2 exit
 process.on("exit", function() {
   Spider.clearRedis();
-  redisConn.end(true);
+  redisClient.end(true);
   clearInterval(SpiderTimer);
 });
