@@ -13,7 +13,7 @@ const { redisClient, basePath, tempPath } = require("./config/upload-config");
 
 module.exports = {
   // 注册上传监听
-  registUpload(req, res) {
+  registerUpload(req, res) {
     var form = new formidable.IncomingForm(),
       files = new Array(),
       File = null,
@@ -28,7 +28,7 @@ module.exports = {
         try {
           fields[field] = value;
         } catch (e) {
-          HttpUtil.writefalse(res, e, "onfield error");
+          HttpUtil.writeFalse(res, e, "onfield error");
         }
       })
       .on("file", function(field, file) {
@@ -36,7 +36,7 @@ module.exports = {
           files[field] = file;
           File = file;
         } catch (e) {
-          HttpUtil.writefalse(res, e, "onfile error!");
+          HttpUtil.writeFalse(res, e, "onfile error!");
         }
       })
       .on("end", function() {
@@ -83,11 +83,11 @@ module.exports = {
       form.parse(req);
     } catch (e) {
       //console.log(e);
-      HttpUtil.writefalse(res, e, "form.parse error");
+      HttpUtil.writeFalse(res, e, "form.parse error");
     }
   },
   //删除文件
-  deleleFile(res, para = {}) {
+  deleteFile(res, para = {}) {
     if (para.del && para.key) {
       const path = basePath + para.del;
 

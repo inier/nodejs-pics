@@ -1,5 +1,5 @@
 module.exports = {
-  writefalse(res, e, msg) {
+  writeFalse(res, e, msg) {
     res.writeHead(200, { "content-type": "text/html;charset=utf-8" });
     if (msg) {
       res.end(msg);

@@ -15,15 +15,15 @@ const server = http.createServer(function(req, res) {
   if ("/api".indexOf(url.split("/")[1]) >= 0) {
     if (method == "POST") {
       // 文件上传：上传监听
-      Upload.registUpload(req, res);
+      Upload.registerUpload(req, res);
     } else if (method == "GET") {
       try {        
         var param = querystring.parse(url.split("?")[1]);
 
         // 文件上传文件：删除文件
-        Upload.deleleFile(res, param);
+        Upload.deleteFile(res, param);
       } catch (e) {
-        HttpUtil.writefalse(res, e, "GET 错误！");
+        HttpUtil.writeFalse(res, e, "GET 错误！");
       }
     } else {
       res.writeHead(404, { "content-type": "text/html;charset=utf-8" });
